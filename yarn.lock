@@ -329,10 +329,10 @@
   dependencies:
     "@twa-dev/types" "^6.7.0"
 
-"@twa-dev/types@^6.7.0":
-  version "6.7.0"
-  resolved "https://registry.npmjs.org/@twa-dev/types/-/types-6.7.0.tgz"
-  integrity sha512-2QtS8oQeHkZvKAsTxqvFGdZOrR7Jc4N9rzJFEIj5e7lC5dqayIatSAh91qmGULjzxOd4sqyWqq1XF6DwZnwldQ==
+"@twa-dev/types@^6.7.0", "@twa-dev/types@^6.9.0":
+  version "6.9.0"
+  resolved "https://registry.npmjs.org/@twa-dev/types/-/types-6.9.0.tgz"
+  integrity sha512-hBkIuJgVtkLAPPhKsNfgyBpgS+15spzUScy5jgpfPJPqXPaaUVDTaWHbeEUU+lUgHmryeQjWyz+UjS7987Pyaw==
 
 "@types/json-schema@^7.0.12":
   version "7.0.12"
