@@ -9,8 +9,12 @@ import WebApp from '@twa-dev/sdk'
 function App() {
   const [count, setCount] = useState(0)
   const mainbutton = WebApp.MainButton;
-  mainbutton.setText('`dice');
+  mainbutton.setText('DICE');
   mainbutton.show();
+  mainbutton.onClick = () => {
+    WebApp.showAlert('Hi');
+  };
+  
 
 
   return (
