@@ -42,4 +42,7 @@
 
 import WebApp from '@twa-dev/sdk'
 
+function App() {
 WebApp.showAlert('Hey there!');
+}
+export default App 
