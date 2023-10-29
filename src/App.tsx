@@ -40,9 +40,21 @@
 
 // export default App
 
-import WebApp from '@twa-dev/sdk'
+import { useEffect } from 'react';
+import WebApp from '@twa-dev/sdk';
 
 function App() {
-WebApp.showAlert('Hey there!');
+  useEffect(() => {
+    WebApp.showAlert('Hey there!');
+  }, []); // Empty dependency array to run the effect only once when the component mounts
+
+  return (
+    <div>
+      <h1>Hello, React App</h1>
+      <p>This is some content.</p>
+    </div>
+  );
 }
-export default App 
+
+export default App;
+
