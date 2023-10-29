@@ -322,14 +322,14 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@twa-dev/sdk@^6.7.1":
-  version "6.7.1"
-  resolved "https://registry.npmjs.org/@twa-dev/sdk/-/sdk-6.7.1.tgz"
-  integrity sha512-2ggfVTbbhDIk+5vBv47IPWSetvtkY5VGCP8dmKmP8BVkdW+i2cYgt4o5s4SabBpuq+2inr+7/Jb7M9srMlOtvw==
+"@twa-dev/sdk@^6.9.1":
+  version "6.9.1"
+  resolved "https://registry.npmjs.org/@twa-dev/sdk/-/sdk-6.9.1.tgz"
+  integrity sha512-R+3a/IRG97NFHS1PF+rj/F2n+cwsHtW1LWGVP0pzIzMK709oMy00qJPV0wxbS16hzcvcW9hPVNwHYTPMv4rrEQ==
   dependencies:
-    "@twa-dev/types" "^6.7.0"
+    "@twa-dev/types" "^6.9.0"
 
-"@twa-dev/types@^6.7.0", "@twa-dev/types@^6.9.0":
+"@twa-dev/types@^6.9.0":
   version "6.9.0"
   resolved "https://registry.npmjs.org/@twa-dev/types/-/types-6.9.0.tgz"
   integrity sha512-hBkIuJgVtkLAPPhKsNfgyBpgS+15spzUScy5jgpfPJPqXPaaUVDTaWHbeEUU+lUgHmryeQjWyz+UjS7987Pyaw==

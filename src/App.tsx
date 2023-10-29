@@ -40,12 +40,6 @@
 
 // export default App
 
-import { Telegram } from "@twa-dev/types"; // Import the specific type you need from "@twa-dev/types"
+import WebApp from '@twa-dev/sdk'
 
-declare global {
-  interface Window {
-    Telegram: Telegram;
-  }
-}
-
-window.Telegram.WebApp.HapticFeedback.notificationOccurred("success");
+WebApp.showAlert('Hey there!');
