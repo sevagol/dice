@@ -11,9 +11,7 @@ function App() {
   const mainbutton = WebApp.MainButton;
   mainbutton.setText('DICE');
   mainbutton.show();
-  mainbutton.onClick = () => {
-    WebApp.showAlert('Hi');
-  };
+  mainbutton.onClick(() => alert('submitted'));
   
 
 
