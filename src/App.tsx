@@ -40,7 +40,7 @@
 
 // export default App
 
-import { Telegram } from "@twa-dev/types"
+import { Telegram } from "@twa-dev/types"; // Import the specific type you need from "@twa-dev/types"
 
 declare global {
   interface Window {
