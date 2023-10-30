@@ -5,7 +5,9 @@ import './App.css'
 import WebApp from '@twa-dev/sdk'
 
 function App() {
+  WebApp.setHeaderColor("secondary_bg_color")
   const [count, setCount] = useState(0)
+
   const mainbutton = WebApp.MainButton;
   mainbutton.setText('DICE');
   mainbutton.show();
@@ -20,7 +22,7 @@ function App() {
           <img src={dicelogo} className="logo" alt="Dice logo" />
         </a>
       </div>
-      <h1>TWA + Vite + React</h1>
+      <h1>DICE Time Tracker</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
