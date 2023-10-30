@@ -29,12 +29,6 @@ function App() {
       <div className="card">
       WebApp.CloudStorage.getItem("started_at")
       </div>
-      {/*  */}
-      <div className="card">
-        <button onClick={() => WebApp.showAlert(`Hello World! Current count is ${count}`)}>
-            Show Alert
-        </button>
-      </div>
     </>
   )
 }
