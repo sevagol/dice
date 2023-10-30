@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import dicelogo from './assets/dice.png'
 import './App.css'
 
@@ -6,7 +5,6 @@ import WebApp from '@twa-dev/sdk'
 
 function App() {
   WebApp.setHeaderColor("secondary_bg_color")
-  const [count, setCount] = useState(0)
 
   const mainbutton = WebApp.MainButton;
   mainbutton.setText('START TRACK');
