@@ -15,20 +15,11 @@ function App() {
     mainbutton.setText('START TRACK');
     mainbutton.show();
     mainbutton.onClick(() => {
-      const params = {
-        // параметры вашего сканера QR
-        // ...
-      };
-      
-      WebApp.showScanQrPopup(params, (text) => {
-        if (text === "start") {
-          WebApp.closeScanQrPopup
-        }
-      });
-      
+      const params = {};
+      WebApp.showScanQrPopup(params);
+
       const currentTime = new Date();
       const formattedTime = currentTime.toLocaleTimeString();
-      // alert(`Track started at: ${formattedTime}`);
       WebApp.CloudStorage.setItem("started_at", formattedTime);
       setStarted(formattedTime);
     });
@@ -42,7 +33,32 @@ function App() {
         setStarted(result);
       }
     });
-  }, []);
+
+    // Зарегистрируйте обработчик события qrTextReceived
+    WebApp.onEvent("qrTextReceived", (text) => {
+      if (text.data === "start") {
+        WebApp.closeScanQrPopup();
+        
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("ended_at", formattedTime);
+        setEnded(formattedTime);
+
+        if (started && formattedTime) {
+          // Вычисляем продолжительность времени
+          const startTime = new Date(started).getTime();
+          const endTime = new Date(formattedTime).getTime();
+          const timeDiff = endTime - startTime;
+
+          // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
+          const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+
+          // Обновляем состояние с продолжительностью времени
+          setDuration(`${minutes} минут`);
+        }
+      }
+    });
+  }, [started]);
 
   // Обработчик для второго нажатия на MainButton
   const handleSecondClick = () => {
@@ -52,19 +68,18 @@ function App() {
     WebApp.CloudStorage.setItem("ended_at", formattedTime);
     setEnded(formattedTime);
 
-    if (started && ended) {
+    if (started && formattedTime) {
       // Вычисляем продолжительность времени
       const startTime = new Date(started).getTime();
-      const endTime = new Date(ended).getTime();
+      const endTime = new Date(formattedTime).getTime();
       const timeDiff = endTime - startTime;
-    
+
       // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
       const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
-    
+
       // Обновляем состояние с продолжительностью времени
       setDuration(`${minutes} минут`);
     }
-    
   };
 
   return (
