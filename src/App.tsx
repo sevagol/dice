@@ -24,7 +24,7 @@ function App() {
     }
 
     const key = "started_at";
-    WebApp.CloudStorage.getItem(key, (error, result) => {
+    WebApp.CloudStorage.getItem(key, (result) => {
       if (result) {
         setStarted(result);
       }
