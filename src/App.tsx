@@ -15,8 +15,7 @@ function App() {
     mainbutton.setText('START TRACK');
     mainbutton.show();
     mainbutton.onClick(() => {
-      const params = {};
-      WebApp.showScanQrPopup(params);
+      openScanner("start");
     });
 
     const key = "started_at";
@@ -28,40 +27,48 @@ function App() {
         setStarted(result);
       }
     });
-
-    // Зарегистрируйте обработчик события qrTextReceived
-    WebApp.onEvent("qrTextReceived", (text) => {
-      if (text.data === "start") {
-        WebApp.closeScanQrPopup();
-
-        const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleTimeString();
-        WebApp.CloudStorage.setItem("started_at", formattedTime);
-        setStarted(formattedTime);
-      }
-    });
   }, []);
 
   // Обработчик для второго нажатия на MainButton
   const handleSecondClick = () => {
-    const currentTime = new Date();
-    const formattedTime = currentTime.toLocaleTimeString();
-    alert(`Track ended at: ${formattedTime}`);
-    WebApp.CloudStorage.setItem("ended_at", formattedTime);
-    setEnded(formattedTime);
+    openScanner("finish");
+  };
 
-    if (started && formattedTime) {
-      // Вычисляем продолжительность времени
-      const startTime = new Date(started).getTime();
-      const endTime = new Date(formattedTime).getTime();
-      const timeDiff = endTime - startTime;
+  // Функция для открытия сканера и обработки события qrTextReceived
+  const openScanner = (scanType: string) => {
+    const params = {};
+    WebApp.showScanQrPopup(params);
 
-      // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
-      const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+    const key = scanType === "start" ? "started_at" : "ended_at";
 
-      // Обновляем состояние с продолжительностью времени
-      setDuration(`${minutes} минут`);
-    }
+    WebApp.onEvent("qrTextReceived", (text) => {
+      if (text.data === scanType) {
+        WebApp.closeScanQrPopup();
+
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem(key, formattedTime);
+
+        if (scanType === "start") {
+          setStarted(formattedTime);
+        } else {
+          setEnded(formattedTime);
+
+          if (started && formattedTime) {
+            // Вычисляем продолжительность времени
+            const startTime = new Date(started).getTime();
+            const endTime = new Date(formattedTime).getTime();
+            const timeDiff = endTime - startTime;
+
+            // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
+            const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+
+            // Обновляем состояние с продолжительностью времени
+            setDuration(`${minutes} минут`);
+          }
+        }
+      }
+    });
   };
 
   return (
