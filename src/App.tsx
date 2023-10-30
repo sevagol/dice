@@ -12,7 +12,7 @@ function App() {
     WebApp.setHeaderColor("secondary_bg_color");
 
     const mainbutton = WebApp.MainButton;
-    mainbutton.setText('CHECK IN');
+    mainbutton.setText('START TRACK');
     mainbutton.show();
     mainbutton.onClick(() => {
       openScanner("start");
@@ -39,33 +39,33 @@ function App() {
     const params = {};
     WebApp.showScanQrPopup(params);
 
-    const key = scanType === "start" ? "started_at" : "ended_at";
-
     WebApp.onEvent("qrTextReceived", (text) => {
-      if (text.data === scanType) {
+      if (scanType === "start" && text.data === "start") {
         WebApp.closeScanQrPopup();
 
         const currentTime = new Date();
         const formattedTime = currentTime.toLocaleTimeString();
-        WebApp.CloudStorage.setItem(key, formattedTime);
+        WebApp.CloudStorage.setItem("started_at", formattedTime);
+        setStarted(formattedTime);
+      } else if (scanType === "finish" && text.data === "finish") {
+        WebApp.closeScanQrPopup();
 
-        if (scanType === "start") {
-          setStarted(formattedTime);
-        } else if (scanType === "finish") {
-          setEnded(formattedTime);
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("ended_at", formattedTime);
+        setEnded(formattedTime);
 
-          if (started && formattedTime) {
-            // Вычисляем продолжительность времени
-            const startTime = new Date(started).getTime();
-            const endTime = new Date(formattedTime).getTime();
-            const timeDiff = endTime - startTime;
+        if (started && formattedTime) {
+          // Вычисляем продолжительность времени
+          const startTime = new Date(started).getTime();
+          const endTime = new Date(formattedTime).getTime();
+          const timeDiff = endTime - startTime;
 
-            // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
-            const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+          // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
+          const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
 
-            // Обновляем состояние с продолжительностью времени
-            setDuration(`${minutes} минут`);
-          }
+          // Обновляем состояние с продолжительностью времени
+          setDuration(`${minutes} минут`);
         }
       }
     });
@@ -90,7 +90,7 @@ function App() {
           </p>
         )}
       </div>
-      <button onClick={handleSecondClick}>CHECK OUT</button>
+      <button onClick={handleSecondClick}>Завершить трек</button>
     </>
   );
 }
