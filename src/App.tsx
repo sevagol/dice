@@ -15,8 +15,9 @@ function App() {
     const currentTime = new Date();
     const formattedTime = currentTime.toLocaleTimeString();
     alert(`Track started at: ${formattedTime}`);
+    WebApp.CloudStorage.setItem("started_at", formattedTime)
   });
-  
+  WebApp.CloudStorage.getItem("started_at")
 
 
   return (
@@ -28,9 +29,7 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
+      WebApp.CloudStorage.getItem("started_at")
       </div>
       {/*  */}
       <div className="card">
