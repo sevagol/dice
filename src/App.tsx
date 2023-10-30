@@ -32,7 +32,7 @@ function App() {
     }
 
     const key = "started_at";
-    WebApp.CloudStorage.getItem(key, (error, result) => {
+    WebApp.CloudStorage.getItem(key, (result) => {
       if (result) {
         setStarted(result);
       }
@@ -40,7 +40,7 @@ function App() {
 
   }, [status, checkInClicked]);
 
-  const openScanner = (scanType) => {
+  const openScanner = (scanType: string) => {
     if (scanType === "start" && checkInClicked) {
       alert("Кнопка 'CHECK IN' уже была нажата.");
       return;
