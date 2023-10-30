@@ -58,7 +58,9 @@ const openScanner = (scanType: string) => {
     setCheckInClicked(true);
 
     const params = {};
+    if (!checkInClicked) {
     WebApp.showScanQrPopup(params);
+    }
 
     WebApp.onEvent("qrTextReceived", (text) => {
       if (text.data === "start") {
