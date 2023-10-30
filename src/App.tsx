@@ -55,44 +55,49 @@ const openScanner = (scanType: string) => {
   if (scanType === "start") {
     // Если это первое нажатие кнопки "CHECK IN", устанавливаем состояние
     setCheckInClicked(true);
-  }
 
-  const params = {};
-  WebApp.showScanQrPopup(params);
+    const params = {};
+    WebApp.showScanQrPopup(params);
 
-  WebApp.onEvent("qrTextReceived", (text) => {
-    if (scanType === "start" && text.data === "start") {
-      WebApp.closeScanQrPopup();
+    WebApp.onEvent("qrTextReceived", (text) => {
+      if (text.data === "start") {
+        WebApp.closeScanQrPopup();
 
-      const currentTime = new Date();
-      const formattedTime = currentTime.toLocaleTimeString();
-      WebApp.CloudStorage.setItem("started_at", formattedTime);
-      setStarted(formattedTime);
-    } else if (scanType === "finish" && text.data === "finish") {
-      WebApp.closeScanQrPopup();
-
-      const currentTime = new Date();
-      const formattedTime = currentTime.toLocaleTimeString();
-      WebApp.CloudStorage.setItem("ended_at", formattedTime);
-      setEnded(formattedTime);
-
-      if (started && formattedTime) {
-        // Вычисляем продолжительность времени
-        const startTime = new Date(started).getTime();
-        const endTime = new Date(formattedTime).getTime();
-        const timeDiff = endTime - startTime;
-
-        // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
-        const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
-
-        // Обновляем состояние с продолжительностью времени
-        setDuration(`${minutes} минут`);
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("started_at", formattedTime);
+        setStarted(formattedTime);
       }
-    }
+    });
+  } else if (scanType === "finish") {
+    // Если сканируется "finish", открываем сканер и устанавливаем обработчик
+    const params = {};
+    WebApp.showScanQrPopup(params);
 
-    // Сброс типа сканирования
-    scanType = "";
-  });
+    WebApp.onEvent("qrTextReceived", (text) => {
+      if (text.data === "finish") {
+        WebApp.closeScanQrPopup();
+
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("ended_at", formattedTime);
+        setEnded(formattedTime);
+
+        if (started && formattedTime) {
+          // Вычисляем продолжительность времени
+          const startTime = new Date(started).getTime();
+          const endTime = new Date(formattedTime).getTime();
+          const timeDiff = endTime - startTime;
+
+          // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
+          const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+
+          // Обновляем состояние с продолжительностью времени
+          setDuration(`${minutes} минут`);
+        }
+      }
+    });
+  }
 };
 
   return (
