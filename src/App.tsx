@@ -7,8 +7,7 @@ function App() {
   const [started, setStarted] = useState("");
   const [ended, setEnded] = useState("");
   const [duration, setDuration] = useState("");
-  const [checkInClicked, setCheckInClicked] = useState(false);
-  const [status, setStatus] = useState("idle");
+  const [status, setStatus] = useState("checkIn");
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
@@ -16,75 +15,56 @@ function App() {
     const mainbutton = WebApp.MainButton;
     mainbutton.show();
 
-    if (status === "idle") {
+    if (status === "checkIn") {
       mainbutton.setText('CHECK IN');
-      mainbutton.onClick(() => {
-        openScanner("start");
-        setCheckInClicked(true);
-        setStatus("checkIn");
-      });
-    } else if (status === "checkIn") {
+      mainbutton.onClick(() => openScanner("start"));
+    } else if (status === "checkOut") {
       mainbutton.setText('CHECK OUT');
-      mainbutton.onClick(() => {
-        openScanner("finish");
-        setStatus("checkOut");
-      });
+      mainbutton.onClick(() => openScanner("finish"));
     }
 
     const key = "started_at";
-    WebApp.CloudStorage.getItem(key, (result) => {
+    WebApp.CloudStorage.getItem(key, (error, result) => {
       if (result) {
         setStarted(result);
       }
     });
+  }, [status]);
 
-  }, [status, checkInClicked]);
+  const openScanner = (scanType: "start" | "finish") => {
+    const params = {};
+    WebApp.showScanQrPopup(params);
 
-  const openScanner = (scanType: string) => {
-    if (scanType === "start" && checkInClicked) {
-      alert("Кнопка 'CHECK IN' уже была нажата.");
-      return;
-    }
+    WebApp.onEvent("qrTextReceived", (text) => {
+      if (scanType === "start" && text.data === "start") {
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("started_at", formattedTime);
+        setStarted(formattedTime);
+        setStatus("checkOut");
+      } else if (scanType === "finish" && text.data === "finish") {
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("ended_at", formattedTime);
+        setEnded(formattedTime);
 
-    if (scanType === "start") {
-      setCheckInClicked(true);
-      const params = {};
-      WebApp.showScanQrPopup(params);
-      WebApp.onEvent("qrTextReceived", (text) => {
-        if (text.data === "start") {
-          WebApp.closeScanQrPopup();
-          const currentTime = new Date();
-          const formattedTime = currentTime.toLocaleTimeString();
-          WebApp.CloudStorage.setItem("started_at", formattedTime);
-          setStarted(formattedTime);
+        if (started) {
+          const startTime = new Date(`1970/01/01 ${started}`).getTime();
+          const endTime = new Date(`1970/01/01 ${formattedTime}`).getTime();
+          const timeDiff = (endTime - startTime) / (1000 * 60);
+          const minutes = Math.abs(Math.round(timeDiff));
+          setDuration(`${minutes} минут`);
         }
-      });
-    } else if (scanType === "finish") {
-      const params = {};
-      WebApp.showScanQrPopup(params);
-      WebApp.onEvent("qrTextReceived", (text) => {
-        if (text.data === "finish") {
-          WebApp.closeScanQrPopup();
-          const currentTime = new Date();
-          const formattedTime = currentTime.toLocaleTimeString();
-          WebApp.CloudStorage.setItem("ended_at", formattedTime);
-          setEnded(formattedTime);
-          if (started && formattedTime) {
-            const startTime = new Date(started).getTime();
-            const endTime = new Date(formattedTime).getTime();
-            const timeDiff = endTime - startTime;
-            const minutes = Math.floor(timeDiff / (1000 * 60));
-            setDuration(`${minutes} минут`);
-          }
-        }
-      });
-    }
+      }
+
+      WebApp.closeScanQrPopup();
+    });
   };
 
   return (
     <>
       <div>
-        <a target="_blank">
+        <a target="_blank" rel="noopener noreferrer">
           <img src={dicelogo} className="logo" alt="Dice logo" />
         </a>
       </div>
