@@ -52,6 +52,11 @@ const openScanner = (scanType: string) => {
     return;
   }
 
+  if (scanType === "start") {
+    // Если это первое нажатие кнопки "CHECK IN", устанавливаем состояние
+    setCheckInClicked(true);
+  }
+
   const params = {};
   WebApp.showScanQrPopup(params);
 
@@ -63,9 +68,6 @@ const openScanner = (scanType: string) => {
       const formattedTime = currentTime.toLocaleTimeString();
       WebApp.CloudStorage.setItem("started_at", formattedTime);
       setStarted(formattedTime);
-
-      // Устанавливаем состояние, что кнопка "CHECK IN" была успешно нажата
-      setCheckInClicked(true);
     } else if (scanType === "finish" && text.data === "finish") {
       WebApp.closeScanQrPopup();
 
