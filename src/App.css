@@ -40,3 +40,10 @@
 .read-the-docs {
   color: #888;
 }
+
+.checkin-time {
+  font-size: 2em;
+  color: #d0602c;
+  margin: 20px 0;
+}
+

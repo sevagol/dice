@@ -70,6 +70,7 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
+      {started && <div className="checkin-time">Check-in Time: {started}</div>}
         {started && ended && (
           <p>
             Начало: {started}
