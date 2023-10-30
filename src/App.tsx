@@ -35,41 +35,42 @@ function App() {
   };
 
   // Функция для открытия сканера и обработки события qrTextReceived
-  const openScanner = (scanType: string) => {
-    const params = {};
-    WebApp.showScanQrPopup(params);
+  // Функция для открытия сканера и обработки события qrTextReceived
+const openScanner = (scanType: String) => {
+  const params = {};
+  WebApp.showScanQrPopup(params);
 
-    WebApp.onEvent("qrTextReceived", (text) => {
-      if (scanType === "start" && text.data === "start") {
-        WebApp.closeScanQrPopup();
+  WebApp.onEvent("qrTextReceived", (text) => {
+    if (scanType === "start" && text.data === "start") {
+      WebApp.closeScanQrPopup();
 
-        const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleTimeString();
-        WebApp.CloudStorage.setItem("started_at", formattedTime);
-        setStarted(formattedTime);
-      } else if (scanType === "finish" && text.data === "finish") {
-        WebApp.closeScanQrPopup();
+      const currentTime = new Date();
+      const formattedTime = currentTime.toLocaleTimeString();
+      WebApp.CloudStorage.setItem("started_at", formattedTime);
+      setStarted(formattedTime);
+    } else if (scanType === "finish" && text.data === "finish") {
+      WebApp.closeScanQrPopup();
 
-        const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleTimeString();
-        WebApp.CloudStorage.setItem("ended_at", formattedTime);
-        setEnded(formattedTime);
+      const currentTime = new Date();
+      const formattedTime = currentTime.toLocaleTimeString();
+      WebApp.CloudStorage.setItem("ended_at", formattedTime);
+      setEnded(formattedTime);
 
-        if (started && formattedTime) {
-          // Вычисляем продолжительность времени
-          const startTime = new Date(started).getTime();
-          const endTime = new Date(formattedTime).getTime();
-          const timeDiff = endTime - startTime;
+      if (started && formattedTime) {
+        // Вычисляем продолжительность времени
+        const startTime = new Date(started).getTime();
+        const endTime = new Date(formattedTime).getTime();
+        const timeDiff = endTime - startTime;
 
-          // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
-          const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+        // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
+        const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
 
-          // Обновляем состояние с продолжительностью времени
-          setDuration(`${minutes} минут`);
-        }
+        // Обновляем состояние с продолжительностью времени
+        setDuration(`${minutes} минут`);
       }
-    });
-  };
+    }
+  });
+};
 
   return (
     <>
