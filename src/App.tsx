@@ -51,7 +51,7 @@ function App() {
 
         if (scanType === "start") {
           setStarted(formattedTime);
-        } else {
+        } else if (scanType === "finish") {
           setEnded(formattedTime);
 
           if (started && formattedTime) {
