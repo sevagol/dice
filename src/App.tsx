@@ -12,7 +12,7 @@ function App() {
     WebApp.setHeaderColor("secondary_bg_color");
 
     const mainbutton = WebApp.MainButton;
-    mainbutton.setText('START TRACK');
+    mainbutton.setText('CHECK IN');
     mainbutton.show();
     mainbutton.onClick(() => {
       openScanner("start");
@@ -90,7 +90,7 @@ function App() {
           </p>
         )}
       </div>
-      <button onClick={handleSecondClick}>Завершить трек</button>
+      <button onClick={handleSecondClick}>CHECK OUT</button>
     </>
   );
 }
