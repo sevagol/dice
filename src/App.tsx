@@ -9,9 +9,13 @@ function App() {
   const [count, setCount] = useState(0)
 
   const mainbutton = WebApp.MainButton;
-  mainbutton.setText('DICE');
+  mainbutton.setText('START TRACK');
   mainbutton.show();
-  mainbutton.onClick(() => alert('submitted'));
+  mainbutton.onClick(() => {
+    const currentTime = new Date();
+    const formattedTime = currentTime.toLocaleTimeString();
+    alert(`Track started at: ${formattedTime}`);
+  });
   
 
 
