@@ -17,11 +17,6 @@ function App() {
     mainbutton.onClick(() => {
       const params = {};
       WebApp.showScanQrPopup(params);
-
-      const currentTime = new Date();
-      const formattedTime = currentTime.toLocaleTimeString();
-      WebApp.CloudStorage.setItem("started_at", formattedTime);
-      setStarted(formattedTime);
     });
 
     const key = "started_at";
@@ -38,27 +33,14 @@ function App() {
     WebApp.onEvent("qrTextReceived", (text) => {
       if (text.data === "start") {
         WebApp.closeScanQrPopup();
-        
+
         const currentTime = new Date();
         const formattedTime = currentTime.toLocaleTimeString();
-        WebApp.CloudStorage.setItem("ended_at", formattedTime);
-        setEnded(formattedTime);
-
-        if (started && formattedTime) {
-          // Вычисляем продолжительность времени
-          const startTime = new Date(started).getTime();
-          const endTime = new Date(formattedTime).getTime();
-          const timeDiff = endTime - startTime;
-
-          // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
-          const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
-
-          // Обновляем состояние с продолжительностью времени
-          setDuration(`${minutes} минут`);
-        }
+        WebApp.CloudStorage.setItem("started_at", formattedTime);
+        setStarted(formattedTime);
       }
     });
-  }, [started]);
+  }, []);
 
   // Обработчик для второго нажатия на MainButton
   const handleSecondClick = () => {
