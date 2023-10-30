@@ -15,9 +15,20 @@ function App() {
     mainbutton.setText('START TRACK');
     mainbutton.show();
     mainbutton.onClick(() => {
+      const params = {
+        // параметры вашего сканера QR
+        // ...
+      };
+      
+      WebApp.showScanQrPopup(params, (text) => {
+        if (text === "start") {
+          WebApp.closeScanQrPopup
+        }
+      });
+      
       const currentTime = new Date();
       const formattedTime = currentTime.toLocaleTimeString();
-      alert(`Track started at: ${formattedTime}`);
+      // alert(`Track started at: ${formattedTime}`);
       WebApp.CloudStorage.setItem("started_at", formattedTime);
       setStarted(formattedTime);
     });
