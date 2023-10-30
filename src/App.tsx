@@ -7,6 +7,7 @@ function App() {
   const [started, setStarted] = useState("");
   const [ended, setEnded] = useState("");
   const [duration, setDuration] = useState(""); // Состояние для хранения продолжительности времени
+  const [checkInClicked, setCheckInClicked] = useState(false); // Состояние для отслеживания нажатия кнопки "CHECK IN"
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
@@ -15,7 +16,15 @@ function App() {
     mainbutton.setText('CHECK IN');
     mainbutton.show();
     mainbutton.onClick(() => {
-      openScanner("start");
+      // Проверяем, была ли уже нажата кнопка "CHECK IN"
+      if (!checkInClicked) {
+        openScanner("start");
+        // Устанавливаем состояние, что кнопка "CHECK IN" была нажата
+        setCheckInClicked(true);
+      } else {
+        // Кнопку нельзя нажимать повторно
+        alert("Кнопка 'CHECK IN' уже была нажата.");
+      }
     });
 
     const key = "started_at";
@@ -27,52 +36,52 @@ function App() {
         setStarted(result);
       }
     });
-  }, []);
+  }, [checkInClicked]);
 
   // Обработчик для второго нажатия на MainButton
   const handleSecondClick = () => {
     openScanner("finish");
   };
 
- // Функция для открытия сканера и обработки события qrTextReceived
-const openScanner = (scanType: string) => {
-  const params = {};
-  WebApp.showScanQrPopup(params);
+  // Функция для открытия сканера и обработки события qrTextReceived
+  const openScanner = (scanType: string) => {
+    const params = {};
+    WebApp.showScanQrPopup(params);
 
-  WebApp.onEvent("qrTextReceived", (text) => {
-    if (scanType === "start" && text.data === "start") {
-      WebApp.closeScanQrPopup();
+    WebApp.onEvent("qrTextReceived", (text) => {
+      if (scanType === "start" && text.data === "start") {
+        WebApp.closeScanQrPopup();
 
-      const currentTime = new Date();
-      const formattedTime = currentTime.toLocaleTimeString();
-      WebApp.CloudStorage.setItem("started_at", formattedTime);
-      setStarted(formattedTime);
-    } else if (scanType === "finish" && text.data === "finish") {
-      WebApp.closeScanQrPopup();
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("started_at", formattedTime);
+        setStarted(formattedTime);
+      } else if (scanType === "finish" && text.data === "finish") {
+        WebApp.closeScanQrPopup();
 
-      const currentTime = new Date();
-      const formattedTime = currentTime.toLocaleTimeString();
-      WebApp.CloudStorage.setItem("ended_at", formattedTime);
-      setEnded(formattedTime);
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        WebApp.CloudStorage.setItem("ended_at", formattedTime);
+        setEnded(formattedTime);
 
-      if (started && formattedTime) {
-        // Вычисляем продолжительность времени
-        const startTime = new Date(started).getTime();
-        const endTime = new Date(formattedTime).getTime();
-        const timeDiff = endTime - startTime;
+        if (started && formattedTime) {
+          // Вычисляем продолжительность времени
+          const startTime = new Date(started).getTime();
+          const endTime = new Date(formattedTime).getTime();
+          const timeDiff = endTime - startTime;
 
-        // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
-        const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+          // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
+          const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
 
-        // Обновляем состояние с продолжительностью времени
-        setDuration(`${minutes} минут`);
+          // Обновляем состояние с продолжительностью времени
+          setDuration(`${minutes} минут`);
+        }
       }
-    }
 
-    // Сброс типа сканирования
-    scanType = "";
-  });
-};
+      // Сброс типа сканирования
+      scanType = "";
+    });
+  };
 
   return (
     <>
