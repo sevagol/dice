@@ -34,9 +34,8 @@ function App() {
     openScanner("finish");
   };
 
-  // Функция для открытия сканера и обработки события qrTextReceived
-  // Функция для открытия сканера и обработки события qrTextReceived
-const openScanner = (scanType: String) => {
+ // Функция для открытия сканера и обработки события qrTextReceived
+const openScanner = (scanType: string) => {
   const params = {};
   WebApp.showScanQrPopup(params);
 
@@ -69,6 +68,9 @@ const openScanner = (scanType: String) => {
         setDuration(`${minutes} минут`);
       }
     }
+
+    // Сброс типа сканирования
+    scanType = "";
   });
 };
 
