@@ -43,16 +43,17 @@ function App() {
 
     if (started && ended) {
       // Вычисляем продолжительность времени
-      const startTime = new Date(started);
-      const endTime = new Date(ended);
+      const startTime = new Date(started).getTime();
+      const endTime = new Date(ended).getTime();
       const timeDiff = endTime - startTime;
-
+    
       // Преобразуем продолжительность времени в минуты (или другой формат, по вашему выбору)
-      const minutes = Math.floor(timeDiff / 60000); // 60000 миллисекунд в минуте
-
+      const minutes = Math.floor(timeDiff / (1000 * 60)); // 1000 миллисекунд в секунде, 60 секунд в минуте
+    
       // Обновляем состояние с продолжительностью времени
       setDuration(`${minutes} минут`);
     }
+    
   };
 
   return (
