@@ -12,7 +12,6 @@ function App() {
   const [ended, setEnded] = useState("");
   const [duration, setDuration] = useState("");
   const [status, setStatus] = useState("checkIn");
-  const [scanType, setScanType] = useState("");
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
@@ -22,16 +21,10 @@ function App() {
 
     if (status === "checkIn") {
       mainbutton.setText('CHECK IN');
-      mainbutton.onClick(() => {
-        setScanType("start");
-        openScanner();
-      });
+      mainbutton.onClick(() => openScanner("start"));
     } else if (status === "checkOut") {
       mainbutton.setText('CHECK OUT');
-      mainbutton.onClick(() => {
-        setScanType("finish");
-        openScanner();
-      });
+      mainbutton.onClick(() => openScanner("finish"));
     }
 
     const key = "started_at";
@@ -48,23 +41,7 @@ function App() {
     }
   }, [started]);
 
-  useEffect(() => {
-    if (scanType === "finish" && started) {
-      const currentTime = new Date();
-      const formattedTime = currentTime.toLocaleTimeString();
-      setEnded(formattedTime);
-
-      const startTime = new Date(`1970/01/01 ${started}`).getTime();
-      const endTime = currentTime.getTime();
-      const timeDiff = (endTime - startTime) / (1000 * 60);
-      const minutes = Math.abs(Math.round(timeDiff));
-      setDuration(`${minutes} минут`);
-
-      setStatus("checkIn");
-    }
-  }, [started, scanType]);
-
-  const openScanner = () => {
+  const openScanner = (scanType: "start" | "finish") => {
     const handler = (text: QrTextReceivedEvent) => {
       WebApp.offEvent("qrTextReceived", handler);
       if (scanType === "start" && text.data === "start") {
@@ -73,7 +50,17 @@ function App() {
         WebApp.CloudStorage.setItem("started_at", formattedTime);
         setStarted(formattedTime);
       } else if (scanType === "finish" && text.data === "finish") {
-        // Весь код, который был здесь ранее, теперь перемещен в useEffect
+        const currentTime = new Date();
+        const formattedTime = currentTime.toLocaleTimeString();
+        setEnded(formattedTime);
+        if (started) {
+          const startTime = new Date(`1970/01/01 ${started}`).getTime();
+          const endTime = currentTime.getTime();
+          const timeDiff = (endTime - startTime) / (1000 * 60);
+          const minutes = Math.abs(Math.round(timeDiff));
+          setDuration(`${minutes} минут`);
+        }
+        setStatus("checkIn");
       }
       WebApp.closeScanQrPopup();
     };
