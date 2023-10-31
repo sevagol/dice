@@ -31,12 +31,12 @@ function App() {
     WebApp.CloudStorage.getItem(key, (result) => {
       if (result) {
         setStarted(result);
+        setStatus("checkOut");
       }
     });
   }, [status]);
 
   const openScanner = (scanType: "start" | "finish") => {
-    WebApp.showScanQrPopup({});
     const handler = (text: QrTextReceivedEvent) => {
       if (scanType === "start" && text.data === "start") {
         const currentTime = new Date();
@@ -47,9 +47,7 @@ function App() {
       } else if (scanType === "finish" && text.data === "finish") {
         const currentTime = new Date();
         const formattedTime = currentTime.toLocaleTimeString();
-        WebApp.CloudStorage.setItem("ended_at", formattedTime);
         setEnded(formattedTime);
-
         if (started) {
           const startTime = new Date(`1970/01/01 ${started}`).getTime();
           const endTime = currentTime.getTime();
@@ -59,8 +57,10 @@ function App() {
         }
       }
       WebApp.closeScanQrPopup();
+      WebApp.offEvent("qrTextReceived", handler);
     };
     WebApp.onEvent("qrTextReceived", handler);
+    WebApp.showScanQrPopup({});
   };
 
   return (
