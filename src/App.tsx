@@ -31,34 +31,38 @@ function App() {
     WebApp.CloudStorage.getItem(key, (result) => {
       if (result) {
         setStarted(result);
-        setStatus("checkOut");
       }
     });
   }, [status]);
 
+  useEffect(() => {
+    if (started) {
+      setStatus("checkOut");
+    }
+  }, [started]);
+
   const openScanner = (scanType: "start" | "finish") => {
     const handler = (text: QrTextReceivedEvent) => {
+      WebApp.offEvent("qrTextReceived", handler);
       if (scanType === "start" && text.data === "start") {
         const currentTime = new Date();
         const formattedTime = currentTime.toLocaleTimeString();
         WebApp.CloudStorage.setItem("started_at", formattedTime);
         setStarted(formattedTime);
-        setStatus("checkOut");
       } else if (scanType === "finish" && text.data === "finish") {
         const currentTime = new Date();
         const formattedTime = currentTime.toLocaleTimeString();
         setEnded(formattedTime);
         if (started) {
-          const startTime = new Date(started).getTime();
+          const startTime = new Date(`1970/01/01 ${started}`).getTime();
           const endTime = currentTime.getTime();
           const timeDiff = (endTime - startTime) / (1000 * 60);
           const minutes = Math.abs(Math.round(timeDiff));
           setDuration(`${minutes} минут`);
-          setStatus("checkIn");
         }
+        setStatus("checkIn");
       }
       WebApp.closeScanQrPopup();
-      WebApp.offEvent("qrTextReceived", handler);
     };
     WebApp.onEvent("qrTextReceived", handler);
     WebApp.showScanQrPopup({});
@@ -73,7 +77,7 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
-      {started && <div className="checkin-time">Check-in Time: {started}</div>}
+        {started && <div className="checkin-time">Check-in Time: {started}</div>}
         {started && ended && (
           <p>
             Начало: {started}
