@@ -19,12 +19,6 @@ function App() {
     const mainbutton = WebApp.MainButton;
     mainbutton.show();
 
-    WebApp.CloudStorage.getItem("status", (result) => {
-      if (result) {
-        setStatus(result);
-      }
-    });
-
     if (status === "checkIn") {
       mainbutton.setText('CHECK IN');
       mainbutton.onClick(() => openScanner("start"));
@@ -33,9 +27,11 @@ function App() {
       mainbutton.onClick(() => openScanner("finish"));
     }
 
-    WebApp.CloudStorage.getItem("started_at", (result) => {
+    const key = "started_at";
+    WebApp.CloudStorage.getItem(key, (result) => {
       if (result) {
         setStarted(result);
+        setStatus("checkOut");
       }
     });
   }, [status]);
@@ -48,21 +44,18 @@ function App() {
         WebApp.CloudStorage.setItem("started_at", formattedTime);
         setStarted(formattedTime);
         setStatus("checkOut");
-        WebApp.CloudStorage.setItem("status", "checkOut");
       } else if (scanType === "finish" && text.data === "finish") {
         const currentTime = new Date();
         const formattedTime = currentTime.toLocaleTimeString();
         setEnded(formattedTime);
         if (started) {
-          const startTime = new Date(`1970/01/01 ${started}`).getTime();
+          const startTime = new Date(started).getTime();
           const endTime = currentTime.getTime();
           const timeDiff = (endTime - startTime) / (1000 * 60);
           const minutes = Math.abs(Math.round(timeDiff));
           setDuration(`${minutes} минут`);
+          setStatus("checkIn");
         }
-        setStatus("checkIn");
-        WebApp.CloudStorage.setItem("status", "checkIn");
-        setStarted("");
       }
       WebApp.closeScanQrPopup();
       WebApp.offEvent("qrTextReceived", handler);
@@ -80,7 +73,7 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
-        {started && <div className="checkin-time">Check-in Time: {started}</div>}
+      {started && <div className="checkin-time">Check-in Time: {started}</div>}
         {started && ended && (
           <p>
             Начало: {started}
