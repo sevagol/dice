@@ -49,6 +49,7 @@ function App() {
         const formattedTime = currentTime.toLocaleTimeString();
         WebApp.CloudStorage.setItem("started_at", formattedTime);
         setStarted(formattedTime);
+        setStatus("checkOut"); // Устанавливаем статус на "checkout" сразу после "checkin"
       } else if (scanType === "finish" && text.data === "finish") {
         const currentTime = new Date();
         const formattedTime = currentTime.toLocaleTimeString();
@@ -67,6 +68,7 @@ function App() {
     WebApp.onEvent("qrTextReceived", handler);
     WebApp.showScanQrPopup({});
   };
+  
 
   return (
     <>
