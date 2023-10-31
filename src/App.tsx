@@ -55,8 +55,6 @@ function App() {
           const minutes = Math.abs(Math.round(timeDiff));
           setDuration(`${minutes} минут`);
         }
-        setStatus("checkIn");
-        setStarted("");
       }
       WebApp.closeScanQrPopup();
       WebApp.offEvent("qrTextReceived", handler);
