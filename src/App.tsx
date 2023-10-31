@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import dicelogo from './assets/dice.png';
 import './App.css';
 import WebApp from '@twa-dev/sdk';
-import { format, parseISO } from 'date-fns';
+
+interface QrTextReceivedEvent {
+  data: string;
+}
 
 function App() {
   const [started, setStarted] = useState("");
@@ -33,36 +36,31 @@ function App() {
   }, [status]);
 
   const openScanner = (scanType: "start" | "finish") => {
-    const params = {};
-    WebApp.showScanQrPopup(params);
-
-    WebApp.onEvent("qrTextReceived", (text) => {
+    WebApp.showScanQrPopup({});
+    const handler = (text: QrTextReceivedEvent) => {
       if (scanType === "start" && text.data === "start") {
         const currentTime = new Date();
-        const formattedTime = format(currentTime, "yyyy-MM-dd'T'HH:mm:ssXXX");
+        const formattedTime = currentTime.toLocaleTimeString();
         WebApp.CloudStorage.setItem("started_at", formattedTime);
         setStarted(formattedTime);
         setStatus("checkOut");
       } else if (scanType === "finish" && text.data === "finish") {
         const currentTime = new Date();
-        const formattedTime = format(currentTime, "yyyy-MM-dd'T'HH:mm:ssXXX");
+        const formattedTime = currentTime.toLocaleTimeString();
         WebApp.CloudStorage.setItem("ended_at", formattedTime);
         setEnded(formattedTime);
-        calculateDuration(formattedTime);
+
+        if (started) {
+          const startTime = new Date(`1970/01/01 ${started}`).getTime();
+          const endTime = currentTime.getTime();
+          const timeDiff = (endTime - startTime) / (1000 * 60);
+          const minutes = Math.abs(Math.round(timeDiff));
+          setDuration(`${minutes} минут`);
+        }
       }
-
       WebApp.closeScanQrPopup();
-    });
-  };
-
-  const calculateDuration = (endTime: string) => {
-    if (started) {
-      const startTimeMs = parseISO(started).getTime();
-      const endTimeMs = parseISO(endTime).getTime();
-      const timeDiff = (endTimeMs - startTimeMs) / (1000 * 60);
-      const minutes = Math.abs(Math.round(timeDiff));
-      setDuration(`${minutes} минут`);
-    }
+    };
+    WebApp.onEvent("qrTextReceived", handler);
   };
 
   return (
@@ -74,16 +72,12 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
-        {started && (
-          <div className="checkin-time">
-            Check-in Time: {format(parseISO(started), 'PPpp')}
-          </div>
-        )}
+      {started && <div className="checkin-time">Check-in Time: {started}</div>}
         {started && ended && (
           <p>
-            Начало: {format(parseISO(started), 'PPpp')}
+            Начало: {started}
             <br />
-            Конец: {format(parseISO(ended), 'PPpp')}
+            Конец: {ended}
             <br />
             Продолжительность: {duration}
           </p>
