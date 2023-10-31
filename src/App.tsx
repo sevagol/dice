@@ -49,7 +49,7 @@ function App() {
         const formattedTime = currentTime.toLocaleTimeString();
         setEnded(formattedTime);
         if (started) {
-          const startTime = new Date(`1970/01/01 ${started}`).getTime();
+          const startTime = new Date(started).getTime();
           const endTime = currentTime.getTime();
           const timeDiff = (endTime - startTime) / (1000 * 60);
           const minutes = Math.abs(Math.round(timeDiff));
