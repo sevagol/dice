@@ -4,10 +4,10 @@ import './App.css';
 import WebApp from '@twa-dev/sdk';
 
 function App() {
-  const [started, setStarted] = useState("");
-  const [ended, setEnded] = useState("");
-  const [duration, setDuration] = useState("");
-  const [status, setStatus] = useState("checkIn");
+  const [started, setStarted] = useState<string>("");
+  const [ended, setEnded] = useState<string>("");
+  const [duration, setDuration] = useState<string>("");
+  const [status, setStatus] = useState<"checkIn" | "checkOut">("checkIn");
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
@@ -23,10 +23,17 @@ function App() {
       mainbutton.onClick(() => openScanner("finish"));
     }
 
-    const key = "started_at";
-    WebApp.CloudStorage.getItem(key, (result) => {
+    WebApp.CloudStorage.getItem("started_at", (result) => {
       if (result) {
         setStarted(result);
+        setStatus("checkOut");
+      }
+    });
+
+    WebApp.CloudStorage.getItem("ended_at", (result) => {
+      if (result) {
+        setEnded(result);
+        calculateDuration(result);
       }
     });
   }, [status]);
@@ -38,27 +45,30 @@ function App() {
     WebApp.onEvent("qrTextReceived", (text) => {
       if (scanType === "start" && text.data === "start") {
         const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleTimeString();
+        const formattedTime = currentTime.toLocaleString();
         WebApp.CloudStorage.setItem("started_at", formattedTime);
         setStarted(formattedTime);
         setStatus("checkOut");
       } else if (scanType === "finish" && text.data === "finish") {
         const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleTimeString();
+        const formattedTime = currentTime.toLocaleString();
         WebApp.CloudStorage.setItem("ended_at", formattedTime);
         setEnded(formattedTime);
-
-        if (ended && started) {
-          const startTime = new Date(started).getTime();
-          const endTime = new Date(formattedTime).getTime();
-          const timeDiff = (endTime - startTime) / (1000 * 60);
-          const minutes = Math.abs(Math.round(timeDiff));
-          setDuration(`${minutes} минут`);
-        }
+        calculateDuration(formattedTime);
       }
 
       WebApp.closeScanQrPopup();
     });
+  };
+
+  const calculateDuration = (endTime: string) => {
+    if (started) {
+      const startTime = new Date(started).getTime();
+      const endTimeMs = new Date(endTime).getTime();
+      const timeDiff = (endTimeMs - startTime) / (1000 * 60);
+      const minutes = Math.abs(Math.round(timeDiff));
+      setDuration(`${minutes} минут`);
+    }
   };
 
   return (
@@ -70,12 +80,12 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
-      {started && <div className="checkin-time">Check-in Time: {started}</div>}
+      {started && <div className="checkin-time">Check-in Time: {new Date(started).toLocaleTimeString()}</div>}
         {started && ended && (
           <p>
-            Начало: {started}
+            Начало: {new Date(started).toLocaleString()}
             <br />
-            Конец: {ended}
+            Конец: {new Date(ended).toLocaleString()}
             <br />
             Продолжительность: {duration}
           </p>
