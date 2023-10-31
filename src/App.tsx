@@ -48,7 +48,7 @@ function App() {
         WebApp.CloudStorage.setItem("ended_at", formattedTime);
         setEnded(formattedTime);
 
-        if (started) {
+        if (ended && started) {
           const startTime = new Date(started).getTime();
           const endTime = new Date(formattedTime).getTime();
           const timeDiff = (endTime - startTime) / (1000 * 60);
