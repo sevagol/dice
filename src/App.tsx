@@ -50,7 +50,7 @@ function App() {
         WebApp.CloudStorage.setItem("ended_at", formattedTime);
         setEnded(formattedTime);
 
-        if (status === "checkOut" && started) {
+        if (started) {
           const startTime = new Date(`1970/01/01 ${started}`).getTime();
           const endTime = currentTime.getTime();
           const timeDiff = (endTime - startTime) / (1000 * 60);
