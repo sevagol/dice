@@ -54,6 +54,7 @@ function App() {
           const timeDiff = (endTime - startTime) / (1000 * 60);
           const minutes = Math.abs(Math.round(timeDiff));
           setDuration(`${minutes} минут`);
+          setStatus("checkIn");
         }
       }
       WebApp.closeScanQrPopup();
