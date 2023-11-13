@@ -32,7 +32,7 @@ function App() {
     messagingSenderId: "754141499011",
     appId: "1:754141499011:web:60908fa367e7c1e74255b6"
   };
-
+  
   const app = initializeApp(firebaseConfig);
   const firestore = getFirestore(app);
 
@@ -67,20 +67,26 @@ function App() {
       WebApp.offEvent("qrTextReceived", handler);
       if (scanType === "start" && text.data === "start") {
         const currentTime = Date.now();
-        setUserData((userData) => ({
+        const newUserData = {
           ...userData!,
           status: "checkOut",
           started_at: currentTime,
-        }));
+        };
+        // Обновляем данные в Firestore
+        updateUserData(newUserData);
+        setUserData(newUserData);
         updateMainButton("checkOut");
         setDuration("");
       } else if (scanType === "finish" && text.data === "finish") {
         const currentTime = Date.now();
-        setUserData((userData) => ({
+        const newUserData = {
           ...userData!,
           status: "checkIn",
           finished_at: currentTime,
-        }));
+        };
+        // Обновляем данные в Firestore
+        updateUserData(newUserData);
+        setUserData(newUserData);
         updateMainButton("checkIn");
         if (userData && userData.started_at) {
           const timeDiff = (currentTime - userData.started_at) / (1000 * 60); // Расчёт в минутах
@@ -90,11 +96,10 @@ function App() {
       }
       WebApp.closeScanQrPopup();
     };
-  
+
     WebApp.onEvent("qrTextReceived", handler);
     WebApp.showScanQrPopup({});
   };
-  
 
   const updateMainButton = (status: string) => {
     const mainbutton = WebApp.MainButton;
@@ -106,6 +111,15 @@ function App() {
     } else if (status === "checkOut") {
       mainbutton.setText('CHECK OUT');
       mainbutton.onClick(() => openScanner("finish"));
+    }
+  };
+
+  // Функция для обновления данных в Firestore
+  const updateUserData = (newUserData: User) => {
+    const userId = WebApp.initDataUnsafe.user?.id;
+    if (userId) {
+      const userRef = doc(firestore, 'users', userId.toString());
+      setDoc(userRef, newUserData);
     }
   };
 
