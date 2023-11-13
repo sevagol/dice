@@ -25,12 +25,12 @@ function App() {
   }, []);
 
   const firebaseConfig = {
-    apiKey: 'YOUR_API_KEY',
-    authDomain: 'YOUR_AUTH_DOMAIN',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    appId: 'YOUR_APP_ID',
+    apiKey: "AIzaSyDmhcaTMQMs2M9aySDqRQqfkdqADDyM8bQ",
+    authDomain: "dice-d3137.firebaseapp.com",
+    projectId: "dice-d3137",
+    storageBucket: "dice-d3137.appspot.com",
+    messagingSenderId: "754141499011",
+    appId: "1:754141499011:web:60908fa367e7c1e74255b6"
   };
 
   const app = initializeApp(firebaseConfig);
