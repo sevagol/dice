@@ -2,85 +2,102 @@ import { useEffect, useState } from 'react';
 import dicelogo from './assets/dice.png';
 import './App.css';
 import WebApp from '@twa-dev/sdk';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
-interface QrTextReceivedEvent {
-  data: string;
+interface User {
+  id: number;
+  status: string;
+  started_at?: number | null;
+  ended_at?: number | null;
 }
 
 function App() {
-  const [started, setStarted] = useState<number | null>(null);
-  const [ended, setEnded] = useState<number | null>(null);
-  const [duration, setDuration] = useState("");
-  const [status, setStatus] = useState<string | null>(null); // Инициализация с null
+  const [userData, setUserData] = useState<User | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
 
-    WebApp.CloudStorage.getItem("started_at", (result) => {
-      if (result) {
-        setStarted(Number(result));
-      }
-    });
-
-    WebApp.CloudStorage.getItem("ended_at", (result) => {
-      if (result) {
-        setEnded(Number(result));
-      }
-    });
-
     WebApp.CloudStorage.getItem("status", (result) => {
-      if (result) {
-        setStatus(result);
-      } else {
-        setStatus("checkIn");
-      }
-    });
-  }, []); // Удаление status из зависимостей
-
-  useEffect(() => {
-    const mainbutton = WebApp.MainButton;
-    mainbutton.show();
-
-    if (status === "checkIn") {
-      mainbutton.setText('CHECK IN');
-      mainbutton.onClick(() => openScanner("start"));
-    } else if (status === "checkOut") {
-      mainbutton.setText('CHECK OUT');
-      mainbutton.onClick(() => openScanner("finish"));
-    }
-  }, [status]); // Отслеживание изменения status
-
-  const openScanner = (scanType: "start" | "finish") => {
-    const handler = (text: QrTextReceivedEvent) => {
-      WebApp.offEvent("qrTextReceived", handler);
-      if (scanType === "start" && text.data === "start") {
-        const currentTime = Date.now();
-        WebApp.CloudStorage.setItem("started_at", currentTime.toString());
-        setStarted(currentTime);
-        setStatus("checkOut");
-        WebApp.CloudStorage.setItem("status", "checkOut");
-      } else if (scanType === "finish" && text.data === "finish") {
-        const currentTime = Date.now();
-        WebApp.CloudStorage.setItem("ended_at", currentTime.toString());
-        setEnded(currentTime);
-        if (started) {
-          const timeDiff = (currentTime - started) / (1000 * 60); // Расчёт в минутах
-          const minutes = Math.round(timeDiff);
-          setDuration(`${minutes} минут`);
-        }
-        setStatus("checkIn");
+      if (!result) {
         WebApp.CloudStorage.setItem("status", "checkIn");
       }
-      WebApp.closeScanQrPopup();
-    };
-    WebApp.onEvent("qrTextReceived", handler);
-    WebApp.showScanQrPopup({});
+    });
+  }, []);
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDmhcaTMQMs2M9aySDqRQqfkdqADDyM8bQ",
+    authDomain: "dice-d3137.firebaseapp.com",
+    projectId: "dice-d3137",
+    storageBucket: "dice-d3137.appspot.com",
+    messagingSenderId: "754141499011",
+    appId: "1:754141499011:web:60908fa367e7c1e74255b6"
   };
 
-  const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString();
+  const app = initializeApp(firebaseConfig);
+  const firestore = getFirestore(app);
+
+  useEffect(() => {
+    const userId = WebApp.initDataUnsafe.user?.id;
+
+    if (userId) {
+      const userRef = doc(firestore, 'users', userId.toString());
+
+      getDoc(userRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          const userData = snapshot.data() as User;
+          setUserData(userData);
+          setStatus(userData.status);
+        } else {
+          // Создаем пользователя при первом входе
+          const newUser: User = {
+            id: userId,
+            status: 'checkIn',
+          };
+          setDoc(userRef, newUser).then(() => {
+            setUserData(newUser);
+            setStatus(newUser.status);
+          });
+        }
+      });
+    }
+  }, [firestore]);
+
+  const checkIn = () => {
+    if (userData) {
+      const userRef = doc(firestore, 'users', userData.id.toString());
+      const currentTime = Date.now();
+      const updatedUserData: User = {
+        ...userData,
+        status: 'checkOut',
+        started_at: currentTime,
+      };
+
+      setDoc(userRef, updatedUserData).then(() => {
+        setStatus(updatedUserData.status);
+        WebApp.CloudStorage.setItem("status", "checkOut");
+      });
+    }
   };
-  
+
+  const checkOut = () => {
+    if (userData) {
+      const userRef = doc(firestore, 'users', userData.id.toString());
+      const currentTime = Date.now();
+      const updatedUserData: User = {
+        ...userData,
+        status: 'checkIn',
+        ended_at: currentTime,
+      };
+
+      setDoc(userRef, updatedUserData).then(() => {
+        setStatus(updatedUserData.status);
+        WebApp.CloudStorage.setItem("status", "checkIn");
+      });
+    }
+  };
+
   return (
     <>
       <div>
@@ -90,15 +107,18 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
-        {started && <div className="checkin-time">Check-in Time: {formatTime(started)}</div>}
-        {started && ended && (
-          <p>
-            Начало: {formatTime(started)}
-            <br />
-            Конец: {formatTime(ended)}
-            <br />
-            Продолжительность: {duration}
-          </p>
+        {userData && (
+          <>
+            {status === "checkIn" && (
+              <button onClick={checkIn}>CHECK IN</button>
+            )}
+            {status === "checkOut" && (
+              <>
+                <p>Check-in Time: {userData.started_at}</p>
+                <button onClick={checkOut}>CHECK OUT</button>
+              </>
+            )}
+          </>
         )}
       </div>
     </>
