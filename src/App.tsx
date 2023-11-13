@@ -3,21 +3,25 @@ import dicelogo from './assets/dice.png';
 import './App.css';
 import WebApp from '@twa-dev/sdk';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 
 interface QrTextReceivedEvent {
   data: string;
 }
 
-interface User {
+interface UserCheckIn {
+  start: number;
+  finish?: number;
+}
+
+interface FirestoreUser {
   id: number;
   status: string;
-  started_at?: number | null;
-  finished_at?: number | null;
+  checkIns: UserCheckIn[];
 }
 
 function App() {
-  const [userData, setUserData] = useState<User | null>(null);
+  const [userData, setUserData] = useState<FirestoreUser | null>(null);
   const [duration, setDuration] = useState<string>("");
 
   useEffect(() => {
@@ -44,15 +48,16 @@ function App() {
 
       getDoc(userRef).then((snapshot) => {
         if (snapshot.exists()) {
-          const userData = snapshot.data() as User;
+          const userData = snapshot.data() as FirestoreUser;
           setUserData(userData);
           updateMainButton(userData.status);
           setDuration(calculateDuration(userData));
         } else {
           // Создаем пользователя при первом входе
-          const newUser: User = {
+          const newUser: FirestoreUser = {
             id: userId,
             status: 'checkIn',
+            checkIns: [],
           };
           setDoc(userRef, newUser).then(() => {
             setUserData(newUser);
@@ -67,27 +72,30 @@ function App() {
   const openScanner = (scanType: "start" | "finish") => {
     const handler = (text: QrTextReceivedEvent) => {
       WebApp.offEvent("qrTextReceived", handler);
+      const currentTime = Date.now();
       if (scanType === "start" && text.data === "start") {
-        const currentTime = Date.now();
-        const newUserData = {
+        // Добавляем Check-in
+        const newCheckIn: UserCheckIn = { start: currentTime };
+        const newUserData: FirestoreUser = {
           ...userData!,
           status: "checkOut",
-          started_at: currentTime,
         };
         // Обновляем данные в Firestore
-        updateUserData(newUserData);
+        updateUserData(newUserData, newCheckIn);
         setUserData(newUserData);
         updateMainButton("checkOut");
         setDuration("");
       } else if (scanType === "finish" && text.data === "finish") {
-        const currentTime = Date.now();
-        const newUserData = {
+        // Ищем последний Check-in и добавляем Check-out
+        const lastCheckInIndex = userData!.checkIns.length - 1;
+        const updatedCheckIns = [...userData!.checkIns];
+        updatedCheckIns[lastCheckInIndex].finish = currentTime;
+        const newUserData: FirestoreUser = {
           ...userData!,
           status: "checkIn",
-          finished_at: currentTime,
         };
         // Обновляем данные в Firestore
-        updateUserData(newUserData);
+        updateUserData(newUserData, updatedCheckIns[lastCheckInIndex]);
         setUserData(newUserData);
         updateMainButton("checkIn");
         setDuration(calculateDuration(newUserData));
@@ -113,19 +121,25 @@ function App() {
   };
 
   // Функция для обновления данных в Firestore
-  const updateUserData = (newUserData: User) => {
+  const updateUserData = (newUserData: FirestoreUser, newCheckIn: UserCheckIn) => {
     const userId = WebApp.initDataUnsafe.user?.id;
     if (userId) {
       const userRef = doc(firestore, 'users', userId.toString());
-      setDoc(userRef, newUserData);
+      updateDoc(userRef, {
+        status: newUserData.status,
+        checkIns: arrayUnion(newCheckIn),
+      });
     }
   };
 
-  const calculateDuration = (user: User | null) => {
-    if (user && user.started_at && user.finished_at) {
-      const timeDiff = (user.finished_at - user.started_at) / (1000 * 60); // Расчёт в минутах
-      const minutes = Math.round(timeDiff);
-      return `${minutes} минут`;
+  const calculateDuration = (user: FirestoreUser | null) => {
+    if (user && user.checkIns.length > 0) {
+      const lastCheckIn = user.checkIns[user.checkIns.length - 1];
+      if (lastCheckIn.finish) {
+        const timeDiff = (lastCheckIn.finish - lastCheckIn.start) / (1000 * 60); // Расчёт в минутах
+        const minutes = Math.round(timeDiff);
+        return `${minutes} минут`;
+      }
     }
     return "";
   };
@@ -141,11 +155,11 @@ function App() {
       <div className="card">
         {userData && (
           <>
-            {userData.started_at && userData.finished_at && (
+            {userData.checkIns.length > 0 && (
               <p>
-                Начало: {new Date(userData.started_at).toLocaleTimeString()}
+                Начало: {new Date(userData.checkIns[userData.checkIns.length - 1].start).toLocaleTimeString()}
                 <br />
-                Конец: {new Date(userData.finished_at).toLocaleTimeString()}
+                Конец: {new Date(userData.checkIns[userData.checkIns.length - 1].finish!).toLocaleTimeString()}
                 <br />
                 Продолжительность: {duration}
               </p>
