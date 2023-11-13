@@ -8,8 +8,8 @@ interface QrTextReceivedEvent {
 }
 
 function App() {
-  const [started, setStarted] = useState("");
-  const [ended, setEnded] = useState("");
+  const [started, setStarted] = useState<number | null>(null);
+  const [ended, setEnded] = useState<number | null>(null);
   const [duration, setDuration] = useState("");
   const [status, setStatus] = useState("checkIn");
 
@@ -27,10 +27,21 @@ function App() {
       mainbutton.onClick(() => openScanner("finish"));
     }
 
-    const key = "started_at";
-    WebApp.CloudStorage.getItem(key, (result) => {
+    WebApp.CloudStorage.getItem("started_at", (result) => {
       if (result) {
-        setStarted(result);
+        setStarted(Number(result));
+      }
+    });
+
+    WebApp.CloudStorage.getItem("ended_at", (result) => {
+      if (result) {
+        setEnded(Number(result));
+      }
+    });
+
+    WebApp.CloudStorage.getItem("status", (result) => {
+      if (result) {
+        setStatus(result);
       }
     });
   }, [status]);
@@ -45,31 +56,33 @@ function App() {
     const handler = (text: QrTextReceivedEvent) => {
       WebApp.offEvent("qrTextReceived", handler);
       if (scanType === "start" && text.data === "start") {
-        const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleTimeString();
-        WebApp.CloudStorage.setItem("started_at", formattedTime);
-        setStarted(formattedTime);
-        setStatus("checkOut"); // Устанавливаем статус на "checkout" сразу после "checkin"
+        const currentTime = Date.now();
+        WebApp.CloudStorage.setItem("started_at", currentTime.toString());
+        setStarted(currentTime);
+        setStatus("checkOut");
+        WebApp.CloudStorage.setItem("status", "checkOut");
       } else if (scanType === "finish" && text.data === "finish") {
-        const currentTime = new Date();
-        const formattedTime = currentTime.toLocaleTimeString();
-        setEnded(formattedTime);
+        const currentTime = Date.now();
+        WebApp.CloudStorage.setItem("ended_at", currentTime.toString());
+        setEnded(currentTime);
         if (started) {
-          const startTime = new Date(`1970/01/01 ${started}`).getTime();
-          const endTime = currentTime.getTime();
-          const timeDiff = (endTime - startTime) / (1000 * 60);
-          const minutes = Math.abs(Math.round(timeDiff));
+          const timeDiff = (currentTime - started) / (1000 * 60); // Расчёт в минутах
+          const minutes = Math.round(timeDiff);
           setDuration(`${minutes} минут`);
         }
         setStatus("checkIn");
+        WebApp.CloudStorage.setItem("status", "checkIn");
       }
       WebApp.closeScanQrPopup();
     };
     WebApp.onEvent("qrTextReceived", handler);
     WebApp.showScanQrPopup({});
   };
-  
 
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleTimeString();
+  };
+  
   return (
     <>
       <div>
@@ -79,12 +92,12 @@ function App() {
       </div>
       <h1>DICE Time Tracker</h1>
       <div className="card">
-        {started && <div className="checkin-time">Check-in Time: {started}</div>}
+        {started && <div className="checkin-time">Check-in Time: {formatTime(started)}</div>}
         {started && ended && (
           <p>
-            Начало: {started}
+            Начало: {formatTime(started)}
             <br />
-            Конец: {ended}
+            Конец: {formatTime(ended)}
             <br />
             Продолжительность: {duration}
           </p>
