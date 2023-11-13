@@ -32,7 +32,7 @@ function App() {
     messagingSenderId: "754141499011",
     appId: "1:754141499011:web:60908fa367e7c1e74255b6"
   };
-  
+
   const app = initializeApp(firebaseConfig);
   const firestore = getFirestore(app);
 
@@ -47,6 +47,7 @@ function App() {
           const userData = snapshot.data() as User;
           setUserData(userData);
           updateMainButton(userData.status);
+          setDuration(calculateDuration(userData));
         } else {
           // Создаем пользователя при первом входе
           const newUser: User = {
@@ -56,6 +57,7 @@ function App() {
           setDoc(userRef, newUser).then(() => {
             setUserData(newUser);
             updateMainButton(newUser.status);
+            setDuration("");
           });
         }
       });
@@ -88,11 +90,7 @@ function App() {
         updateUserData(newUserData);
         setUserData(newUserData);
         updateMainButton("checkIn");
-        if (userData && userData.started_at) {
-          const timeDiff = (currentTime - userData.started_at) / (1000 * 60); // Расчёт в минутах
-          const minutes = Math.round(timeDiff);
-          setDuration(`${minutes} минут`);
-        }
+        setDuration(calculateDuration(newUserData));
       }
       WebApp.closeScanQrPopup();
     };
@@ -121,6 +119,15 @@ function App() {
       const userRef = doc(firestore, 'users', userId.toString());
       setDoc(userRef, newUserData);
     }
+  };
+
+  const calculateDuration = (user: User | null) => {
+    if (user && user.started_at && user.finished_at) {
+      const timeDiff = (user.finished_at - user.started_at) / (1000 * 60); // Расчёт в минутах
+      const minutes = Math.round(timeDiff);
+      return `${minutes} минут`;
+    }
+    return "";
   };
 
   return (
