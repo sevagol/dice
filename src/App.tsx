@@ -5,6 +5,10 @@ import WebApp from '@twa-dev/sdk';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
+interface QrTextReceivedEvent {
+  data: string;
+}
+
 interface User {
   id: number;
   status: string;
@@ -15,15 +19,10 @@ interface User {
 function App() {
   const [userData, setUserData] = useState<User | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [duration, setDuration] = useState<string>("");
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
-
-    WebApp.CloudStorage.getItem("status", (result) => {
-      if (!result) {
-        WebApp.CloudStorage.setItem("status", "checkIn");
-      }
-    });
   }, []);
 
   const firebaseConfig = {
@@ -64,37 +63,45 @@ function App() {
     }
   }, [firestore]);
 
-  const checkIn = () => {
-    if (userData) {
-      const userRef = doc(firestore, 'users', userData.id.toString());
-      const currentTime = Date.now();
-      const updatedUserData: User = {
-        ...userData,
-        status: 'checkOut',
-        started_at: currentTime,
-      };
+  const openScanner = (scanType: "start" | "finish") => {
+    const handler = (text: QrTextReceivedEvent) => {
+      WebApp.offEvent("qrTextReceived", handler);
+      if (scanType === "start" && text.data === "start") {
+        const currentTime = Date.now();
+        setUserData({
+          ...userData!,
+          status: "checkOut",
+          started_at: currentTime,
+        });
+        setStatus("checkOut");
+      } else if (scanType === "finish" && text.data === "finish") {
+        const currentTime = Date.now();
+        setUserData({
+          ...userData!,
+          status: "checkIn",
+          ended_at: currentTime,
+        });
+        if (userData && userData.started_at) {
+          const timeDiff = (currentTime - userData.started_at) / (1000 * 60); // Расчёт в минутах
+          const minutes = Math.round(timeDiff);
+          setDuration(`${minutes} минут`);
+        }
+        setStatus("checkIn");
+      }
+      WebApp.closeScanQrPopup();
+    };
 
-      setDoc(userRef, updatedUserData).then(() => {
-        setStatus(updatedUserData.status);
-        WebApp.CloudStorage.setItem("status", "checkOut");
-      });
-    }
+    WebApp.onEvent("qrTextReceived", handler);
+    WebApp.showScanQrPopup({});
   };
 
-  const checkOut = () => {
-    if (userData) {
-      const userRef = doc(firestore, 'users', userData.id.toString());
-      const currentTime = Date.now();
-      const updatedUserData: User = {
-        ...userData,
-        status: 'checkIn',
-        ended_at: currentTime,
-      };
-
-      setDoc(userRef, updatedUserData).then(() => {
-        setStatus(updatedUserData.status);
-        WebApp.CloudStorage.setItem("status", "checkIn");
-      });
+  const handleMainButtonClick = () => {
+    if (status === "checkIn") {
+      setStatus("checkOut");
+      openScanner("start");
+    } else if (status === "checkOut") {
+      setStatus("checkIn");
+      openScanner("finish");
     }
   };
 
@@ -110,13 +117,22 @@ function App() {
         {userData && (
           <>
             {status === "checkIn" && (
-              <button onClick={checkIn}>CHECK IN</button>
+              <button onClick={handleMainButtonClick}>CHECK IN</button>
             )}
             {status === "checkOut" && (
               <>
                 <p>Check-in Time: {userData.started_at}</p>
-                <button onClick={checkOut}>CHECK OUT</button>
+                <button onClick={handleMainButtonClick}>CHECK OUT</button>
               </>
+            )}
+            {userData.started_at && userData.ended_at && (
+              <p>
+                Начало: {new Date(userData.started_at).toLocaleTimeString()}
+                <br />
+                Конец: {new Date(userData.ended_at).toLocaleTimeString()}
+                <br />
+                Продолжительность: {duration}
+              </p>
             )}
           </>
         )}
