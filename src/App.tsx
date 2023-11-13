@@ -11,21 +11,10 @@ function App() {
   const [started, setStarted] = useState<number | null>(null);
   const [ended, setEnded] = useState<number | null>(null);
   const [duration, setDuration] = useState("");
-  const [status, setStatus] = useState("checkIn");
+  const [status, setStatus] = useState<string | null>(null); // Инициализация с null
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
-
-    const mainbutton = WebApp.MainButton;
-    mainbutton.show();
-
-    if (status === "checkIn") {
-      mainbutton.setText('CHECK IN');
-      mainbutton.onClick(() => openScanner("start"));
-    } else if (status === "checkOut") {
-      mainbutton.setText('CHECK OUT');
-      mainbutton.onClick(() => openScanner("finish"));
-    }
 
     WebApp.CloudStorage.getItem("started_at", (result) => {
       if (result) {
@@ -42,15 +31,24 @@ function App() {
     WebApp.CloudStorage.getItem("status", (result) => {
       if (result) {
         setStatus(result);
+      } else {
+        setStatus("checkIn");
       }
     });
-  }, [status]);
+  }, []); // Удаление status из зависимостей
 
   useEffect(() => {
-    if (started) {
-      setStatus("checkOut");
+    const mainbutton = WebApp.MainButton;
+    mainbutton.show();
+
+    if (status === "checkIn") {
+      mainbutton.setText('CHECK IN');
+      mainbutton.onClick(() => openScanner("start"));
+    } else if (status === "checkOut") {
+      mainbutton.setText('CHECK OUT');
+      mainbutton.onClick(() => openScanner("finish"));
     }
-  }, [started]);
+  }, [status]); // Отслеживание изменения status
 
   const openScanner = (scanType: "start" | "finish") => {
     const handler = (text: QrTextReceivedEvent) => {
