@@ -92,20 +92,21 @@ function App() {
         updatedCheckIns[lastCheckInIndex].finish = currentTime;
         const newUserData: FirestoreUser = {
           ...userData!,
-          status: "checkIn", // Возвращаем статус на "checkIn"
+          status: "checkIn", // Обновляем статус на "checkIn"
         };
         // Обновляем данные в Firestore
         updateUserData(newUserData, updatedCheckIns[lastCheckInIndex]);
         setUserData(newUserData);
         updateMainButton("checkIn");
         setDuration(calculateDuration(newUserData));
-      }      
+      }
       WebApp.closeScanQrPopup();
     };
-
+  
     WebApp.onEvent("qrTextReceived", handler);
     WebApp.showScanQrPopup({});
   };
+  
 
   const updateMainButton = (status: string) => {
     const mainbutton = WebApp.MainButton;
