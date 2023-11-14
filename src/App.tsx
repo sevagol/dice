@@ -5,9 +5,9 @@ import WebApp from '@twa-dev/sdk';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 
-// interface QrTextReceivedEvent {
-//   data: string;
-// }
+interface QrTextReceivedEvent {
+  data: string;
+}
 
 interface FirestoreUser {
   id: number;
@@ -60,19 +60,39 @@ function App() {
     }
   }, [firestore]);
 
-  const handleCheckIn = async () => {
+  const openScanner = (scanType: "start" | "finish", callback: () => Promise<void>) => {
+    const handler = async (event: QrTextReceivedEvent) => {
+      WebApp.offEvent("qrTextReceived", handler);
+      if ((scanType === "start" && event.data === "start") ||
+          (scanType === "finish" && event.data === "finish")) {
+        await callback();
+      }
+      WebApp.closeScanQrPopup();
+    };
+  
+    WebApp.onEvent("qrTextReceived", handler);
+    WebApp.showScanQrPopup({});
+  };
+  
+
+  const handleCheckIn = () => {
     const userId = WebApp.initDataUnsafe.user?.id;
     if (userId) {
-      await checkInUser(userId);
+      openScanner("start", async () => {
+        await checkInUser(userId);
+      });
     }
   };
-
-  const handleCheckOut = async () => {
+  
+  const handleCheckOut = () => {
     const userId = WebApp.initDataUnsafe.user?.id;
     if (userId && userData) {
-      await checkOutUser(userId, userData.started_at);
+      openScanner("finish", async () => {
+        await checkOutUser(userId, userData.started_at);
+      });
     }
   };
+  
 
   const checkInUser = async (userId: number) => {
     const userRef = doc(firestore, 'users', userId.toString());
