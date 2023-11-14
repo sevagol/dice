@@ -3,26 +3,20 @@ import dicelogo from './assets/dice.png';
 import './App.css';
 import WebApp from '@twa-dev/sdk';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteField } from 'firebase/firestore';
 
-interface QrTextReceivedEvent {
-  data: string;
-}
-
-interface UserCheckIn {
-  start: number;
-  finish?: number;
-}
+// interface QrTextReceivedEvent {
+//   data: string;
+// }
 
 interface FirestoreUser {
   id: number;
   status: string;
-  checkIns: UserCheckIn[];
+  started_at?: number;
 }
 
 function App() {
   const [userData, setUserData] = useState<FirestoreUser | null>(null);
-  const [duration, setDuration] = useState<string>("");
 
   useEffect(() => {
     WebApp.setHeaderColor("secondary_bg_color");
@@ -51,62 +45,61 @@ function App() {
           const userData = snapshot.data() as FirestoreUser;
           setUserData(userData);
           updateMainButton(userData.status);
-          setDuration(calculateDuration(userData));
         } else {
           // Создаем пользователя при первом входе
           const newUser: FirestoreUser = {
             id: userId,
             status: 'checkIn',
-            checkIns: [],
           };
           setDoc(userRef, newUser).then(() => {
             setUserData(newUser);
             updateMainButton(newUser.status);
-            setDuration("");
           });
         }
       });
     }
   }, [firestore]);
 
-  const openScanner = (scanType: "start" | "finish") => {
-    const handler = (text: QrTextReceivedEvent) => {
-      WebApp.offEvent("qrTextReceived", handler);
-      const currentTime = Date.now();
-      if (scanType === "start" && text.data === "start") {
-        // Добавляем Check-in
-        const newCheckIn: UserCheckIn = { start: currentTime };
-        const newUserData: FirestoreUser = {
-          ...userData!,
-          status: "checkOut",
-        };
-        // Обновляем данные в Firestore
-        updateUserData(newUserData, newCheckIn);
-        setUserData(newUserData);
-        updateMainButton("checkOut");
-        setDuration("");
-      } else if (scanType === "finish" && text.data === "finish") {
-        // Ищем последний Check-in и добавляем Check-out
-        const lastCheckInIndex = userData!.checkIns.length - 1;
-        const updatedCheckIns = [...userData!.checkIns];
-        updatedCheckIns[lastCheckInIndex].finish = currentTime;
-        const newUserData: FirestoreUser = {
-          ...userData!,
-          status: "checkIn", // Обновляем статус на "checkIn"
-        };
-        // Обновляем данные в Firestore
-        updateUserData(newUserData, updatedCheckIns[lastCheckInIndex]);
-        setUserData(newUserData);
-        updateMainButton("checkIn");
-        setDuration(calculateDuration(newUserData));
-      }
-      WebApp.closeScanQrPopup();
-    };
-  
-    WebApp.onEvent("qrTextReceived", handler);
-    WebApp.showScanQrPopup({});
+  const handleCheckIn = async () => {
+    const userId = WebApp.initDataUnsafe.user?.id;
+    if (userId) {
+      await checkInUser(userId);
+    }
   };
-  
+
+  const handleCheckOut = async () => {
+    const userId = WebApp.initDataUnsafe.user?.id;
+    if (userId && userData) {
+      await checkOutUser(userId, userData.started_at);
+    }
+  };
+
+  const checkInUser = async (userId: number) => {
+    const userRef = doc(firestore, 'users', userId.toString());
+    await setDoc(userRef, {
+      id: userId,
+      status: 'checkOut',
+      started_at: Date.now(),
+    });
+    setUserData({ id: userId, status: 'checkOut', started_at: Date.now() });
+    updateMainButton('checkOut');
+  };
+
+  const checkOutUser = async (userId: number, startedAt?: number) => {
+    if (startedAt) {
+      const duration = Date.now() - startedAt;
+      // Показать продолжительность пользователю
+      alert(`Продолжительность: ${duration / 1000} секунд`);
+
+      const userRef = doc(firestore, 'users', userId.toString());
+      await updateDoc(userRef, {
+        status: 'checkIn',
+        started_at: deleteField(),
+      });
+      setUserData({ id: userId, status: 'checkIn' });
+      updateMainButton('checkIn');
+    }
+  };
 
   const updateMainButton = (status: string) => {
     const mainbutton = WebApp.MainButton;
@@ -114,35 +107,11 @@ function App() {
 
     if (status === "checkIn") {
       mainbutton.setText('CHECK IN');
-      mainbutton.onClick(() => openScanner("start"));
+      mainbutton.onClick(handleCheckIn);
     } else if (status === "checkOut") {
       mainbutton.setText('CHECK OUT');
-      mainbutton.onClick(() => openScanner("finish"));
+      mainbutton.onClick(handleCheckOut);
     }
-  };
-
-  // Функция для обновления данных в Firestore
-  const updateUserData = (newUserData: FirestoreUser, newCheckIn: UserCheckIn) => {
-    const userId = WebApp.initDataUnsafe.user?.id;
-    if (userId) {
-      const userRef = doc(firestore, 'users', userId.toString());
-      updateDoc(userRef, {
-        status: newUserData.status,
-        checkIns: arrayUnion(newCheckIn),
-      });
-    }
-  };
-
-  const calculateDuration = (user: FirestoreUser | null) => {
-    if (user && user.checkIns.length > 0) {
-      const lastCheckIn = user.checkIns[user.checkIns.length - 1];
-      if (lastCheckIn.finish) {
-        const timeDiff = (lastCheckIn.finish - lastCheckIn.start) / (1000 * 60); // Расчёт в минутах
-        const minutes = Math.round(timeDiff);
-        return `${minutes} минут`;
-      }
-    }
-    return "";
   };
 
   return (
@@ -156,15 +125,9 @@ function App() {
       <div className="card">
         {userData && (
           <>
-            {userData.checkIns.length > 0 && (
-              <p>
-                Начало: {new Date(userData.checkIns[userData.checkIns.length - 1].start).toLocaleTimeString()}
-                <br />
-                Конец: {new Date(userData.checkIns[userData.checkIns.length - 1].finish!).toLocaleTimeString()}
-                <br />
-                Продолжительность: {duration}
-              </p>
-            )}
+            <p>
+              Статус: {userData.status}
+            </p>
           </>
         )}
       </div>
